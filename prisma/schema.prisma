@@ -1,0 +1,25 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum WordStatus {
+  pending
+  review
+  approved
+  rejected
+}
+
+model Word {
+  id         Int        @id @default(autoincrement())
+  word       String
+  definition String
+  status     WordStatus @default(pending)
+  createdAt  DateTime   @default(now())
+}
