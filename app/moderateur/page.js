@@ -1,35 +1,53 @@
 'use client';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Moderateur() {
-  const [documents, setDocuments] = useState([
-    { 
-      id: 1, 
-      motHassaniya: "gbal",
-      explicationFrancais: "tambour",
-      statut: "En attente", 
-      date: "2024-03-20" 
-    },
-    { 
-      id: 2, 
-      motHassaniya: "8ark",
-      explicationFrancais: "danse",
-      statut: "En cours de révision", 
-      date: "2024-03-21" 
-    },
-    { 
-      id: 3, 
-      motHassaniya: "gbeyl",
-      explicationFrancais: "petit tambour",
-      statut: "En attente", 
-      date: "2024-03-22" 
-    },
-  ]);
+  const [documents, setDocuments] = useState([]);
 
-  const handleStatusChange = (id, newStatus) => {
-    setDocuments(documents.map(doc => 
-      doc.id === id ? {...doc, statut: newStatus} : doc
-    ));
+  // Charger les documents au montage du composant
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  // Récupérer les documents depuis l'API
+  const fetchDocuments = async () => {
+    try {
+      const response = await fetch('/api/moderateur');
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP! Statut : ${response.status}`);
+      }
+      const result = await response.json();
+      if (result.success) {
+        setDocuments(result.data);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des documents :', error);
+    }
+  };
+
+  // Mettre à jour le statut d'un document
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      console.log('Envoi de la requête :', { id, status: newStatus }); // Log les données envoyées
+  
+      const response = await fetch('/api/moderateur', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP! Statut : ${response.status}`);
+      }
+      const result = await response.json();
+      if (result.success) {
+        // Rafraîchir la liste des documents après la mise à jour
+        fetchDocuments();
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut :', error);
+    }
   };
 
   return (
@@ -68,34 +86,34 @@ export default function Moderateur() {
                     <td className="px-6 py-5 text-sm text-gray-800">{doc.id}</td>
                     <td className="px-6 py-5">
                       <span className="text-sm font-medium text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full">
-                        {doc.motHassaniya}
+                        {doc.word}
                       </span>
                     </td>
-                    <td className="px-6 py-5 text-sm text-gray-800">{doc.explicationFrancais}</td>
+                    <td className="px-6 py-5 text-sm text-gray-800">{doc.definition}</td>
                     <td className="px-6 py-5">
                       <span
                         className={`px-4 py-2 rounded-full text-sm font-medium inline-block ${
-                          doc.statut === "En attente"
+                          doc.status === "En attente"
                             ? "bg-amber-100 text-amber-700 border border-amber-200"
-                            : doc.statut === "En cours de révision"
+                            : doc.status === "En cours de révision"
                             ? "bg-blue-100 text-blue-700 border border-blue-200"
-                            : doc.statut === "Rejeté"
+                            : doc.status === "Rejeté"
                             ? "bg-red-100 text-red-700 border border-red-200"
                             : "bg-emerald-100 text-emerald-700 border border-emerald-200"
                         }`}
                       >
-                        {doc.statut}
+                        {doc.status}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                        {doc.date}
+                        {doc.created_at}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleStatusChange(doc.id, "Accepté")}
+                          onClick={() => handleStatusChange(doc.id, "Accépter")}
                           className="px-3 py-1 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                         >
                           Accepter
@@ -107,7 +125,7 @@ export default function Moderateur() {
                           Réviser
                         </button>
                         <button
-                          onClick={() => handleStatusChange(doc.id, "Rejeté")}
+                          onClick={() => handleStatusChange(doc.id, "réjeter")}
                           className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                         >
                           Rejeter
@@ -123,4 +141,4 @@ export default function Moderateur() {
       </div>
     </div>
   );
-} 
+}
